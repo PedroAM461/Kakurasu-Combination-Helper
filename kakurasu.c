@@ -1,27 +1,31 @@
 #include <stdio.h>
 #include <windows.h>
 
-int S[512][10];  //Matriz global das combinacoes
-//S[i][0] eh a soma da i-esima combinacao
-//Se S[i][j] for 1, com j > 0, entao o numero j faz parte da combinacao i
+
+int S[4096][13];  //Matriz global das combinacoes
+char RES[13];  //Array das restricoes
+
 int NUM;  //Soma desejada
-char RES[10];  //Array das restricoes (vou usar string pq eh mais facil)
+int DIM = 9;  //N
+int POT = 512;  //2^N
+int MAX = 45;  //Soma maxima
 
 
-void fInicializar() {
+
+void fInicializar() {  //Inicializar TODAS combinacoes
     int pot = 1;  //pot. de 2
-    for (int x = 1; x < 10; x++) {
+    for (int x = 1; x < 13; x++) {
         int a = 1;  //bit
-        for (int y = 0; y < 512; y++) {
+        for (int y = 0; y < 4096; y++) {
             if (y % pot == 0) a = !a;  //troca ciclica
             S[y][x] = a;
         }
         pot *= 2;  //proxima pot.
     }
 
-    for (int i = 0; i < 512; i++) {
+    for (int i = 0; i < 4096; i++) {
         int sum = 0;
-        for (int j = 1; j < 10; j++) {
+        for (int j = 1; j < 13; j++) {
             if (S[i][j]) sum += j;  //conta os bits ligados
         }
         S[i][0] = sum;
@@ -29,12 +33,29 @@ void fInicializar() {
 }
 
 void fMostrar() {
-    for (int i = 0; i < 512; i++) {
-        for (int j = 0; j < 10; j++) {
+    for (int i = 0; i < POT; i++) {
+        for (int j = 0; j < DIM+1; j++) {
             printf("%d ", S[i][j]);
         }
         printf("\n");
     }
+}
+
+void fMaxima() {
+    int m = 0;
+    for (int x = 1; x <= DIM; x++) m += x;
+    MAX = m;
+}
+
+void fPotencia() {
+    int p = 2;
+    for (int x = 1; x < DIM; x++) p *= 2;
+    POT = p;
+}
+
+void fLimpaTeclado() {
+	char c;
+	while((c = getchar()) != EOF && c != '\n'){}
 }
 
 int fMenu1() {
@@ -42,65 +63,110 @@ int fMenu1() {
     
     printf("Qual numero vc quer somar: ");
     scanf("%d", &escolha);
-    getchar();
+    fLimpaTeclado();
+
+    return escolha;
+}
+
+int fMenu2() {
+    int escolha;
+    
+    do {
+        printf("Qual a dimensao do tabuleiro: ");
+        scanf("%d", &escolha);
+        fLimpaTeclado();
+    } while (escolha < 1 || escolha > 12);
 
     return escolha;
 }
 
 int fChecaRestricao(int row) {
-    for (int x = 1; x < 10; x++) {
-        if(S[row][x] == 0 && (RES[x-1] != '?' && RES[x-1] != 'X')) return 0;
+    for (int x = 1; x < DIM+1; x++) {
+        if(S[row][x] == 0 && (RES[x-1] == 'c')) return 0;
         
-        if (S[row][x] == 1 && RES[x-1] == 'X') return 0;
+        if (S[row][x] == 1 && RES[x-1] == 'x') return 0;
     }
     return 1;
+}
+
+void fObterString() {
+    int ticker;
+
+    do {
+        ticker = 1;
+        printf("Insira a restricao atual: ");
+        scanf("%s", RES);
+        fLimpaTeclado();
+
+        int s = 0;
+        for (int x = 0; RES[x] != '\0' && ticker; x++) {
+            if (RES[x] != 'z' && RES[x] != 'x' && RES[x] != 'c') ticker = 0;
+            s++;
+        }
+
+        if (s != DIM) ticker = 0;
+
+    } while (!ticker);
 }
 
 void fKakuro() {
     system("cls");
 
-    int FREQ[9] = {0,0,0,0,0,0,0,0,0};
+    int FREQ[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
     int TOTAL = 0;
 
     //Calcula quantas combinacoes tem, e a frequencia de cada numero
-    for (int i = 0; i < 512; i++) {
+    for (int i = 0; i < POT; i++) {
         if (S[i][0] == NUM) {
             if (fChecaRestricao(i)) {
                 TOTAL++;
-                for (int j = 1; j < 10; j++) {
+                for (int j = 1; j < DIM+1; j++) {
                     if (S[i][j]) FREQ[j-1]++;
                 }
             }
         }
     }
 
-    printf("=== RESULTADOS COM BASE NA SUA RESTRICAO ===\n\n");
-    printf(">>Os numeros obrigatorios sao:\n");
-    for (int x = 0; x < 9; x++) {
-        if (FREQ[x] == TOTAL) printf("[%d]", x+1);
-    }
+    printf("=== RESULTADOS ===\n\n");
 
-    printf("\n\n");
+    if (TOTAL == 0) {
 
-    printf(">>Os numeros proibidos sao:\n");
-    for (int x = 0; x < 9; x++) {
-        if (FREQ[x] == 0) printf("[%d]", x+1);
-    }
+        printf("Nao existem combinacoes que encaixem na restricao dada\n");
+        printf("Voce cometeu algum erro...\n");
 
-    printf("\n\n");
+    } else {
 
-    printf(">>Frequencias:\n");
-    printf("    Num: ");
-    for (int x = 0; x < 9; x++) {
-        printf("[%2d]", x+1);
+        printf("Soma: %d\n", NUM);
+        printf("Tamanho: %dx%d\n", DIM, DIM);
+        printf("Restricao: %s\n\n", RES);
+
+        printf(">>Os numeros obrigatorios sao:\n");
+        for (int x = 0; x < DIM; x++) {
+            if (FREQ[x] == TOTAL) printf("[%d]", x+1);
+        }
+
+        printf("\n\n");
+
+        printf(">>Os numeros proibidos sao:\n");
+        for (int x = 0; x < DIM; x++) {
+            if (FREQ[x] == 0) printf("[%d]", x+1);
+        }
+
+        printf("\n\n");
+
+        printf(">>Frequencias:\n");
+        printf("    Num: ");
+        for (int x = 0; x < DIM; x++) {
+            printf("[%2d]", x+1);
+        }
+        printf("\n");
+        printf("Aparece: ");
+        for (int x = 0; x < DIM; x++) {
+            printf("[%2d]", FREQ[x]);
+        }
+        printf("\n");
+        printf(">>Total de combinacoes: %d\n", TOTAL);
     }
-    printf("\n");
-    printf("Aparece: ");
-    for (int x = 0; x < 9; x++) {
-        printf("[%2d]", FREQ[x]);
-    }
-    printf("\n");
-    printf(">>Total de combinacoes: %d\n", TOTAL);
 
     printf("\n");
     system("pause");
@@ -112,38 +178,22 @@ int main () {
     do {
         system("cls");
 
-        printf("=== ASSISTENTE DE COMBINACOES DO KAKURASU 9x9 ===\n");  //dps adicionar outros nxn
+        printf("=== ASSISTENTE DE COMBINACOES DO KAKURASU %dx%d ===\n\n", DIM, DIM);
+        printf("[Digite -1 para trocar o tamanho]\n");
         NUM = fMenu1();
 
-        if (!NUM) {
-            printf("\nflw\n"); system("pause");
+        if (NUM >= 0 && NUM <= MAX) {
+            fObterString();
+            fKakuro();
         } else {
-            if (NUM < 1 || NUM > 45) {  //Isso nao eh kakuro
-                printf("\nbruh\n"); system("pause");
+            if (NUM == -1) {
+                DIM = fMenu2();
+                fPotencia();
+                fMaxima();
             } else {
-
-                //n vou testar todos casos desta budega, apenas escreva corretamente nove simbolos
-                printf("Insira a restricao atual (Ex. ?XX4X???9):\n");
-                scanf("%s", RES);  //ACHO q ele coloca '\0'
-                getchar();
-
-                fKakuro();
+                printf("\nbruh\n"); system("pause");
             }
         }
-    } while (NUM);
 
-
-
+    } while (1);
 }
-
-/* Lembra muito um somador, com carry out
-1 troca a cada 2^0 (1) vezes [000000000] {%1}
-2 troca a cada 2^1 (2) vezes [010101010] {%2}
-3 troca a cada 2^2 (4) vezes [012301230] {%4}
-4 troca a cada 2^3 (8) vezes ...
-5 troca a cada 2^4 (16) vezes ..
-6 troca a cada 2^5 (32) vezes .
-7 troca a cada 2^6 (64) vezes
-8 troca a cada 2^7 (128) vezes
-9 troca a cada 2^8 (256) vezes
-*/
