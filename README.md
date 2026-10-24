@@ -1,7 +1,9 @@
 check your combinations with restrictions
-O = You are certain the number is part of the solution (you can also use the number itself)
-X = You are certain the number is NOT part of the solution
-? = You are uncertain
+c = You are certain the number is part of the solution
+x = You are certain the number is NOT part of the solution
+z = You are uncertain
 
-im going to add some way of changing the size of the board (nxn)
+e.g. For 4x4, cczz
+
 this helper basically works with the main logic of kakurasu: MUST number and DONT numbers 
+now it works for nxn, n <= 12
